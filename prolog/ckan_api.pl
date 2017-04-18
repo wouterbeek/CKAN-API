@@ -1091,8 +1091,9 @@ ckan_request(Uri1, Action, Args1, Result) :-
   (del_dict(version, Args1, Version, Args2) -> true ; Args2 = Args1),
   include(ground, [api,Version,action,Action], Segments2),
   append(Segments1, Segments2, Segments3),
+  State = repeat(true),
   (   del_dict(page_size, Args2, PageSize, Args3)
-  ->  betwixt(0, inf, PageSize, Offset),
+  ->  betwixt(State, 0, inf, PageSize, Offset),
       Args4 = Args3.put(_{limit: PageSize, offset: Offset})
   ;   Args4 = Args2
   ),
@@ -1118,7 +1119,7 @@ ckan_request(Uri1, Action, Args1, Result) :-
     ),
     (   between(200, 299, Status)
     ->  http_parse_header_value(content_type, ContentType, MT),
-        ckan_request_stream(In, MT, Result)
+        ckan_request_stream(In, MT, State, Result)
     ;   fail
     ),
     close(In)
@@ -1126,27 +1127,33 @@ ckan_request(Uri1, Action, Args1, Result) :-
 ckan_request(Uri, _, _, _) :-
   type_error(uri, Uri).
 
-ckan_request_stream(In, media(application/json,_), Result) :- !,
+ckan_request_stream(In, media(application/json,_), State, Result) :- !,
   json_read_dict(In, Reply),
   (   \+ is_dict(Reply)
   ->  type_error(ckan_reply, Reply)
   ;   get_dict(error, Reply, Error)
   ->  throw(error(Error.'__type',context(Reply.help,Error.message)))
   ;   get_dict(result, Reply, Result),
-      (boolean(Result) -> !, true ; Result == [] -> !, true ; true)
+      (   boolean(Result)
+      ->  nb_setarg(1, State, false)
+      ;   Result == []
+      ->  nb_setarg(1, State, false)
+      ;   true
+      )
   ).
-ckan_request_stream(In, _, _) :-
+ckan_request_stream(In, _, _, _) :-
   peek_string(In, 50, Str),
   throw(error(no_json(Str),context(ckan_request_stream,ckan_api))).
 
 boolean(false).
 boolean(true).
 
-betwixt(Low, _, _, Low).
-betwixt(Low0, High, Interval, Value):-
+betwixt(_, Low, _, _, Low).
+betwixt(State, Low0, High, Interval, Value):-
+  arg(1, State, true),
   Low is Low0 + Interval,
   (   High == inf
   ->  true
   ;   Low =< High
   ),
-  betwixt(Low, High, Interval, Value).
+  betwixt(State, Low, High, Interval, Value).
