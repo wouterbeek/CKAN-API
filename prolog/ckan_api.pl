@@ -1088,9 +1088,10 @@ ckan_request(Uri, Action, Result) :-
 ckan_request(Uri1, Action, Args1, Result) :-
   uri_components(Uri1, uri_components(Scheme,Auth,Path1,_,_)), !,
   atomic_list_concat([''|Segments1], /, Path1),
+  (append(Segments2, [''], Segments1) -> true ; Segments2 = Segments1),
   (del_dict(version, Args1, Version, Args2) -> true ; Args2 = Args1),
-  include(ground, [api,Version,action,Action], Segments2),
-  append(Segments1, Segments2, Segments3),
+  include(ground, [api,Version,action,Action], Segments3),
+  append(Segments2, Segments3, Segments4),
   State = repeat(true),
   (   del_dict(page_size, Args2, PageSize, Args3)
   ->  betwixt(State, 0, inf, PageSize, Offset),
@@ -1102,7 +1103,7 @@ ckan_request(Uri1, Action, Args1, Result) :-
   ;   Args5 = Args4,
       Opts = []
   ),
-  atomic_list_concat([''|Segments3], /, Path3),
+  atomic_list_concat([''|Segments4], /, Path3),
   dict_pairs(Args5, _, Args6),
   uri_query_components(Query, Args6),
   uri_components(Uri2, uri_components(Scheme,Auth,Path3,Query,_)),
@@ -1141,9 +1142,9 @@ ckan_request_stream(In, media(application/json,_), State, Result) :- !,
       ;   true
       )
   ).
-ckan_request_stream(In, _, _, _) :-
-  peek_string(In, 50, Str),
-  throw(error(no_json(Str),context(ckan_request_stream,ckan_api))).
+ckan_request_stream(_, _, _, _) :-
+  print_message(warning, no_json),
+  fail.
 
 boolean(false).
 boolean(true).
@@ -1157,3 +1158,9 @@ betwixt(State, Low0, High, Interval, Value):-
   ;   Low =< High
   ),
   betwixt(State, Low, High, Interval, Value).
+
+:- multifile
+    prolog:message//1.
+
+prolog:message(no_json) -->
+  ["The request body does not contain JSON."].
