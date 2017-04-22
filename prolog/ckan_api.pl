@@ -79,6 +79,10 @@
 | Pack             | Package       |
 | Rev              | Revision      |
 
+The following debug flag is defined:
+
+  - ckan_api
+
 @author Wouter Beek
 @compat Based on CKAN API 2.6.0
 @see http://docs.ckan.org/en/latest/api.html
@@ -1149,8 +1153,8 @@ ckan_request_stream(Uri, In, media(application/json,_), State, Result) :- !,
       ;   true
       )
   ).
-ckan_request_stream(Uri, _, _, _, _) :-
-  print_message(warning, no_json(Uri)),
+ckan_request_stream(Uri, _, MediaType, _, _) :-
+  debug(ckan_api, "Non-JSON Media Type ~w (~a).", [MediaType,Uri]),
   fail.
 
 boolean(false).
@@ -1160,14 +1164,5 @@ betwixt(_, Low, _, _, Low).
 betwixt(State, Low0, High, Interval, Value):-
   arg(1, State, true),
   Low is Low0 + Interval,
-  (   High == inf
-  ->  true
-  ;   Low =< High
-  ),
+  (High == inf -> true ; Low =< High),
   betwixt(State, Low, High, Interval, Value).
-
-:- multifile
-    prolog:message//1.
-
-prolog:message(no_json(Uri)) -->
-  ["The request body does not contain JSON (~a)."-[Uri]].

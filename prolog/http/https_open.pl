@@ -49,7 +49,7 @@ https_open(Uri, In, Opts1) :-
     Opts1,
     [
       cert_verify_hook(cert_accept_any),
-      timeout(1)
+      timeout(10)
     ],
     Opts2
   ),
