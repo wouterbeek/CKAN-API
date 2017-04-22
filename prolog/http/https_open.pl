@@ -15,6 +15,7 @@ Make it easy to send an HTTPS request in SWI-Prolog.
 
 :- use_module(library(http/http_open)).
 :- use_module(library(http/http_ssl_plugin)).
+:- use_module(library(option)).
 :- use_module(library(ssl)).
 
 :- public
@@ -43,9 +44,17 @@ ssl_verify(_SSL, _ProblemCertificate, _AllCertificates, _FirstCertificate, _Erro
 % )
 % ```
 
-https_open(Uri, In, Opts) :-
+https_open(Uri, In, Opts1) :-
+  merge_options(
+    Opts1,
+    [
+      cert_verify_hook(cert_accept_any),
+      timeout(1)
+    ],
+    Opts2
+  ),
   catch(
-    http_open(Uri, In, Opts),
+    http_open(Uri, In, Opts2),
     E,
     (
       print_message(warning, E),
