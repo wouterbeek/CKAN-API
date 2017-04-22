@@ -53,11 +53,4 @@ https_open(Uri, In, Opts1) :-
     ],
     Opts2
   ),
-  catch(
-    http_open(Uri, In, Opts2),
-    E,
-    (
-      print_message(warning, E),
-      fail
-    )
-  ).
+  http_open(Uri, In, Opts2).

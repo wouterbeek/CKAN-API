@@ -95,6 +95,7 @@ The following debug flag is defined:
 :- use_module(library(http/https_open)).
 :- use_module(library(http/json)).
 :- use_module(library(lists)).
+:- use_module(library(solution_sequences)).
 :- use_module(library(uri)).
 
 
@@ -203,9 +204,11 @@ ckan_site(Site) :-
 %! ckan_site_uri(-Uri) is det.
 
 ckan_site_uri(Uri) :-
-  ckan_site(Site),
-  (get_dict('url-api', Site, Uri0) -> true ; get_dict(url, Site, Uri0)),
-  atom_string(Uri, Uri0).
+  distinct(Uri, (
+    ckan_site(Site),
+    (get_dict('url-api', Site, Uri0) -> true ; get_dict(url, Site, Uri0)),
+    atom_string(Uri, Uri0)
+  )).
 
 
 
@@ -1111,23 +1114,31 @@ ckan_request(Uri1, Action, Args1, Result) :-
   dict_pairs(Args5, _, Args6),
   uri_query_components(Query, Args6),
   uri_components(Uri2, uri_components(Scheme,Auth,Path3,Query,_)),
-  setup_call_cleanup(
-    https_open(
-      Uri2,
-      In,
-      [
-        header(content_type, ContentType),
-        request_header('Accept'='application/json'),
-        status_code(Status)
-      | Opts
-      ]
+  catch(
+    setup_call_cleanup(
+      https_open(
+        Uri2,
+        In,
+        [
+          header(content_type, ContentType),
+          request_header('Accept'='application/json'),
+          status_code(Status)
+        | Opts
+        ]
+      ),
+      (   between(200, 299, Status)
+      ->  http_parse_header_value(content_type, ContentType, MT),
+          ckan_request_stream(Uri2, In, MT, State, Result)
+      ;   fail
+      ),
+      close(In)
     ),
-    (   between(200, 299, Status)
-    ->  http_parse_header_value(content_type, ContentType, MT),
-        ckan_request_stream(Uri2, In, MT, State, Result)
-    ;   fail
-    ),
-    close(In)
+    E,
+    (
+      nb_setarg(1, State, false),
+      print_message(warning, E),
+      fail
+    )
   ).
 ckan_request(Uri, _, _, _) :-
   type_error(uri, Uri).
