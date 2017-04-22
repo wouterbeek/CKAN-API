@@ -88,7 +88,7 @@
 :- use_module(library(apply)).
 :- use_module(library(error)).
 :- use_module(library(http/http_header)).
-:- use_module(library(http/http_open)).
+:- use_module(library(http/https_open)).
 :- use_module(library(http/json)).
 :- use_module(library(lists)).
 :- use_module(library(uri)).
@@ -184,7 +184,7 @@ ckan_resource(Uri, Res) :-
 
 ckan_site(Site) :-
   setup_call_cleanup(
-    http_open(
+    https_open(
       'https://ckan.github.io/ckan-instances/config/instances.json',
       In,
       [request_header('Accept'='application/json'),status_code(Status)]
@@ -1108,7 +1108,7 @@ ckan_request(Uri1, Action, Args1, Result) :-
   uri_query_components(Query, Args6),
   uri_components(Uri2, uri_components(Scheme,Auth,Path3,Query,_)),
   setup_call_cleanup(
-    http_open(
+    https_open(
       Uri2,
       In,
       [
