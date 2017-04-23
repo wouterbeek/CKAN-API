@@ -1144,13 +1144,14 @@ ckan_request(Uri, _, _, _) :-
   type_error(uri, Uri).
 
 ckan_request_stream(Uri, In, media(application/json,_), State, Result) :- !,
-  catch(
-    json_read_dict(In, Reply),
-    E,
-    (
-      print_message(warning, buggy_json(Uri,E)),
+  (   catch(json_read_dict(In, Reply), E, true)
+  ->  (   var(E)
+      ->  true
+      ;   print_message(warning, buggy_json(Uri,E)),
+          nb_setarg(1, State, false)
+      )
+  ;   nb_setarg(1, State, false),
       fail
-    )
   ),
   (   \+ is_dict(Reply)
   ->  type_error(ckan_reply, Reply)
