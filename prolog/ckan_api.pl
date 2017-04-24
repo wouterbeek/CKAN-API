@@ -92,7 +92,7 @@ The following debug flag is defined:
 :- use_module(library(apply)).
 :- use_module(library(error)).
 :- use_module(library(http/http_header)).
-:- use_module(library(http/https_open)).
+:- use_module(library(http/http_open)).
 :- use_module(library(http/json)).
 :- use_module(library(lists)).
 :- use_module(library(solution_sequences)).
@@ -189,10 +189,14 @@ ckan_resource(Uri, Res) :-
 
 ckan_site(Site) :-
   setup_call_cleanup(
-    https_open(
+    http_open(
       'https://ckan.github.io/ckan-instances/config/instances.json',
       In,
-      [request_header('Accept'='application/json'),status_code(Status)]
+      [
+        request_header('Accept'='application/json'),
+        status_code(Status),
+        timeout(60)
+      ]
     ),
     (between(200, 299, Status) -> json_read_dict(In, Sites) ; fail),
     close(In)
@@ -1116,13 +1120,14 @@ ckan_request(Uri1, Action, Args1, Result) :-
   uri_components(Uri2, uri_components(Scheme,Auth,Path3,Query,_)),
   catch(
     setup_call_cleanup(
-      https_open(
+      http_open(
         Uri2,
         In,
         [
           header(content_type, ContentType),
           request_header('Accept'='application/json'),
-          status_code(Status)
+          status_code(Status),
+          timeout(60)
         | Opts
         ]
       ),
