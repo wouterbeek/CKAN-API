@@ -86,14 +86,12 @@ The following debug flag is defined:
 @author Wouter Beek
 @compat Based on CKAN API 2.6.0
 @see http://docs.ckan.org/en/latest/api.html
-@version 2017/04
+@version 2017/04, 2017/06
 */
 
 :- use_module(library(apply)).
 :- use_module(library(error)).
-:- use_module(library(http/http_header)).
-:- use_module(library(http/http_open)).
-:- use_module(library(http/json)).
+:- use_module(library(http/http_client2)).
 :- use_module(library(lists)).
 :- use_module(library(solution_sequences)).
 :- use_module(library(uri)).
@@ -189,7 +187,7 @@ ckan_resource(Uri, Res) :-
 
 ckan_site(Site) :-
   setup_call_cleanup(
-    http_open(
+    http_open2(
       'https://ckan.github.io/ckan-instances/config/instances.json',
       In,
       [
@@ -1118,32 +1116,38 @@ ckan_request(Uri1, Action, Args1, Result) :-
   dict_pairs(Args5, _, Args6),
   uri_query_components(Query, Args6),
   uri_components(Uri2, uri_components(Scheme,Auth,Path3,Query,_)),
+  % @bug Only if you trace all the way into library(http/http_open)
+  %      from here, this works.
   catch(
-    setup_call_cleanup(
-      http_open(
-        Uri2,
-        In,
-        [
-          header(content_type, ContentType),
-          request_header('Accept'='application/json'),
-          status_code(Status),
-          timeout(60)
-        | Opts
-        ]
-      ),
-      (   between(200, 299, Status)
-      ->  http_parse_header_value(content_type, ContentType, MT),
-          ckan_request_stream(Uri2, In, MT, State, Result)
-      ;   fail
-      ),
-      close(In)
+    http_open2(
+      Uri2,
+      In,
+      [
+        header(content_type, ContentType),
+        request_header('Accept'='application/json'),
+        status_code(Status),
+        timeout(60)
+      | Opts
+      ]
     ),
     E,
-    (
-      nb_setarg(1, State, false),
+    true
+  ),
+  (   var(E)
+  ->  true
+  ;   nb_setarg(1, State, false),
+      format(user_output, "~w\n", [E]),
+      debug(http(send_request), "~w\n", [E]),
       print_message(warning, E),
-      fail
-    )
+      !, false
+  ),
+  call_cleanup(
+    (   between(200, 299, Status)
+    ->  http_parse_header_value(content_type, ContentType, MT),
+        ckan_request_stream(Uri2, In, MT, State, Result)
+    ;   fail
+    ),
+    close(In)
   ).
 ckan_request(Uri, _, _, _) :-
   type_error(uri, Uri).
