@@ -92,7 +92,9 @@ The following debug flag is defined:
 :- use_module(library(apply)).
 :- use_module(library(debug)).
 :- use_module(library(error)).
+:- use_module(library(http/http_header)).
 :- use_module(library(http/http_open)).
+:- use_module(library(http/json)).
 :- use_module(library(lists)).
 :- use_module(library(solution_sequences)).
 :- use_module(library(uri)).
@@ -192,6 +194,7 @@ ckan_site(Site) :-
       'https://ckan.github.io/ckan-instances/config/instances.json',
       In,
       [
+        cert_verify_hook(cert_accept_any),
         request_header('Accept'='application/json'),
         status_code(Status),
         timeout(60)
@@ -1112,26 +1115,25 @@ ckan_request(Uri1, Action, Args1, Result) :-
   ;   Args4 = Args2
   ),
   (   del_dict(api_key, Args4, Key, Args5)
-  ->  Opts = [request_header('Authorization'=Key)]
+  ->  Options = [request_header('Authorization'=Key)]
   ;   Args5 = Args4,
-      Opts = []
+      Options = []
   ),
   atomic_list_concat([''|Segments4], /, Path3),
   dict_pairs(Args5, _, Args6),
   uri_query_components(Query, Args6),
   uri_components(Uri2, uri_components(Scheme,Auth,Path3,Query,_)),
-  % @bug Only if you trace all the way into library(http/http_open)
-  %      from here, this works.
   catch(
-    http_open2(
+    http_open(
       Uri2,
       In,
       [
+        cert_verify_hook(cert_accept_any),
         header(content_type, ContentType),
         request_header('Accept'='application/json'),
         status_code(Status),
         timeout(60)
-      | Opts
+      | Options
       ]
     ),
     E,

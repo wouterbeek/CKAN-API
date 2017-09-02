@@ -16,6 +16,7 @@ http://datos.santander.es
 */
 
 :- use_module(library(apply)).
+:- use_module(library(atom_ext)).
 :- use_module(library(debug)).
 :- use_module(library(hash_ext)).
 :- use_module(library(hdt)).
@@ -61,10 +62,10 @@ ckan2rdf(Site, Hash, File1, File2) :-
   debug(ckan2rdf, "Started: ~a ~a", [Hash,Site]),
   atomic_list_concat([graph,Hash], /, Local),
   rdf_global_id(ckan:Local, G),
-  rdf_retractall(_, _, _, G),
+  rdf_unload_graph(G),
   scrape_site(G, Site),
   rdf_save_ntriples(File1, [graph(G)]),
-  rdf_retractall(_, _, _, G),
+  rdf_unload_graph(G),
   hdt_create_from_file(File2, File1, []),
   debug(ckan2rdf, "Finished: ~a ~a", [Hash,Site]).
 
