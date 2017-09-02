@@ -86,12 +86,13 @@ The following debug flag is defined:
 @author Wouter Beek
 @compat Based on CKAN API 2.6.0
 @see http://docs.ckan.org/en/latest/api.html
-@version 2017/04, 2017/06
+@version 2017/04, 2017/06, 2017/09
 */
 
 :- use_module(library(apply)).
+:- use_module(library(debug)).
 :- use_module(library(error)).
-:- use_module(library(http/http_client2)).
+:- use_module(library(http/http_open)).
 :- use_module(library(lists)).
 :- use_module(library(solution_sequences)).
 :- use_module(library(uri)).
@@ -187,7 +188,7 @@ ckan_resource(Uri, Res) :-
 
 ckan_site(Site) :-
   setup_call_cleanup(
-    http_open2(
+    http_open(
       'https://ckan.github.io/ckan-instances/config/instances.json',
       In,
       [
@@ -196,7 +197,10 @@ ckan_site(Site) :-
         timeout(60)
       ]
     ),
-    (between(200, 299, Status) -> json_read_dict(In, Sites) ; fail),
+    (
+      must_be(between(200,299), Status),
+      json_read_dict(In, Sites)
+    ),
     close(In)
   ),
   member(Site, Sites).
