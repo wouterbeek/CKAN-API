@@ -1169,7 +1169,7 @@ ckan_request_stream(Uri, In, media(application/json,_), State, Result) :- !,
       fail
   ),
   (   \+ is_dict(Reply)
-  ->  type_error(ckan_reply, Reply)
+  ->  print_message(no_ckan_reply(Uri,Reply))
   ;   get_dict(error, Reply, Error)
   ->  throw(error(Error.'__type',context(Reply.help,Error.message)))
   ;   get_dict(result, Reply, Result),

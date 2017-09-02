@@ -15,6 +15,7 @@ http://datos.santander.es
 @version 2017/04, 2017/06, 2017/09
 */
 
+:- use_module(library(aggregate)).
 :- use_module(library(apply)).
 :- use_module(library(atom_ext)).
 :- use_module(library(debug)).
@@ -25,6 +26,7 @@ http://datos.santander.es
 :- use_module(library(pairs)).
 :- use_module(library(semweb/rdf_ext)).
 :- use_module(library(semweb/turtle)).
+:- use_module(library(thread)).
 :- use_module(library(zlib)).
 
 :- debug(ckan2rdf).
@@ -55,9 +57,6 @@ ckan2rdf(Dir, Site) :-
   maplist(hash_file(Dir, Hash), ['data.nt','data.hdt'], [File1,File2]),
   ckan2rdf(Site, Hash, File1, File2).
 
-ckan2rdf(Site, Hash, _, File2) :-
-  exists_file(File2), !,
-  debug(ckan2rdf, "Skipping: ~a ~a", [Hash,Site]).
 ckan2rdf(Site, Hash, File1, File2) :-
   debug(ckan2rdf, "Started: ~a ~a", [Hash,Site]),
   atomic_list_concat([graph,Hash], /, Local),
@@ -203,7 +202,8 @@ key_predicate_class(X, Y, Z) :-
 % Threaded version of ckan2rdf/1.
 
 ckan2rdf_thread(Dir) :-
-  forall(
-    ckan_site_uri(Site),
-    thread_create(ckan2rdf(Dir, Site), _, [alias(Site),detached(true)])
-  ).
+  current_prolog_flag(cpu_count, N1),
+  N2 is N1 * 10,
+  set_prolog_flag(cpu_count, N2),
+  aggregate_all(set(Site), ckan_site_uri(Site), Sites),
+  concurrent_maplist(ckan2rdf(Dir), Sites).
