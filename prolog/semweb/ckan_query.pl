@@ -38,7 +38,7 @@ Query locally cached CKAN metadata.
 
 %! ckan(?S, ?P, ?O, +File) is nondet.
 %
-% File must be an HDT file created by library(ckan/ckan2rdf).
+% File must be an HDT file created by library(semweb/ckan2rdf).
 
 ckan(S, P, O, File) :-
   hdt_call_on_file(File, {S,P,O}/[Hdt]>>hdt_search(Hdt, S, P, O)).

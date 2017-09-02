@@ -16,10 +16,10 @@ http://datos.santander.es
 */
 
 :- use_module(library(apply)).
-:- use_module(library(ckan/ckan_api)).
 :- use_module(library(debug)).
 :- use_module(library(hash_ext)).
 :- use_module(library(hdt)).
+:- use_module(library(http/ckan_api)).
 :- use_module(library(lists)).
 :- use_module(library(pairs)).
 :- use_module(library(semweb/rdf_ext)).
@@ -51,24 +51,21 @@ ckan2rdf(Dir) :-
 
 ckan2rdf(Dir, Site) :-
   md5(Site, Hash),
-  file_name_extension(Hash, nt, Local),
-  directory_file_path(Dir, Local, File),
-  ckan2rdf(Site, Hash, File),
-  rdf2hdt(File).
+  maplist(hash_file(Dir, Hash), ['data.nt','data.hdt'], [File1,File2]),
+  ckan2rdf(Site, Hash, File1, File2).
 
-ckan2rdf(Site, Hash, File) :-
-  exists_file(File), !,
+ckan2rdf(Site, Hash, _, File2) :-
+  exists_file(File2), !,
   debug(ckan2rdf, "Skipping: ~a ~a", [Hash,Site]).
-ckan2rdf(Site, Hash, File) :-
+ckan2rdf(Site, Hash, File1, File2) :-
   debug(ckan2rdf, "Started: ~a ~a", [Hash,Site]),
   atomic_list_concat([graph,Hash], /, Local),
   rdf_global_id(ckan:Local, G),
   rdf_retractall(_, _, _, G),
   scrape_site(G, Site),
-  rdf_save_ntriples(File, [graph(G)]),
+  rdf_save_ntriples(File1, [graph(G)]),
   rdf_retractall(_, _, _, G),
-  hdt_create_from_file(HdtFile, TriplesFileTmp, []),
-  finish_ntriples_file(File),
+  hdt_create_from_file(File2, File1, []),
   debug(ckan2rdf, "Finished: ~a ~a", [Hash,Site]).
 
 scrape_site(G, Site) :-
