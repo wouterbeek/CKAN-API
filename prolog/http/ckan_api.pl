@@ -1108,8 +1108,10 @@ ckan_request(Uri1, Action, Args1, Result) :-
   uri_comps(Uri1, uri(Scheme,Auth,Segments1,_,_)),
   include(ground, [api,Version,action,Action], Segments2),
   append(Segments1, Segments2, Segments3),
+  State = state(succeed),
   (   del_dict(page_size, Args2, PageSize, Args3)
   ->  between(0, inf, PageSize, Offset),
+      (State = state(succeed) -> true ; !, fail),
       Args4 = Args3.put(_{limit: PageSize, offset: Offset})
   ;   Args4 = Args2
   ),
@@ -1134,21 +1136,23 @@ ckan_request(Uri1, Action, Args1, Result) :-
       ]
     ),
     (
-      must_be(between(200,299), Status),
+      (between(200, 299, Status) -> true ; throw(http_error(Status,Uri2))),
       http_parse_header_value(content_type, ContentType, media(Supertype/Subtype,_)),
       must_be(oneof([media(application/json)]), media(Supertype/Subtype)),
       json_read_dict(In, Reply),
       must_be(dict, Reply),
       (   get_dict(error, Reply, Error)
       ->  throw(error(Error.'__type',context(Reply.help,Error.message)))
-      ;   _{result: Results} :< Reply,
-          (   is_of_type(boolean, Results)
-          ->  Result = Results
-          ;   is_of_type(dict, Results)
-          ->  Result = Results
-          ;   is_of_type(list(dict), Results)
-          ->  member(Result, Results)
-          ;   type_error(json, Reply)
+      ;   _{result: Result} :< Reply,
+          (   is_of_type(boolean, Result)
+          ->  true
+          ;   is_of_type(dict, Result)
+          ->  true
+          ;   is_of_type(list, Result),
+              Result \== []
+          ->  true
+          ;   nb_setarg(1, State, fail),
+              fail
           )
       )
     ),

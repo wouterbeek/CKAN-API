@@ -1,15 +1,13 @@
 :- module(
   ckan2rdf,
   [
-    ckan2rdf/1,        % +Dir
-    ckan2rdf_thread/1, % +Dir
-    ckan2rdf/1         % +Dir, +Site
+    ckan2rdf/1,       % +Dir
+    ckan2rdf/2,       % +Dir, +Site
+    ckan2rdf_thread/1 % +Dir
   ]
 ).
 
 /** <module> CKAN-2-RDF
-
-http://datos.santander.es
 
 @author Wouter Beek
 @version 2017/04, 2017/06, 2017/09
