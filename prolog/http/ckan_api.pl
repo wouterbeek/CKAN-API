@@ -91,13 +91,15 @@ The following debug flag is defined:
 
 :- use_module(library(apply)).
 :- use_module(library(debug)).
+:- use_module(library(dict_ext)).
 :- use_module(library(error)).
 :- use_module(library(http/http_header)).
 :- use_module(library(http/http_open)).
 :- use_module(library(http/json)).
 :- use_module(library(lists)).
+:- use_module(library(math_ext)).
 :- use_module(library(solution_sequences)).
-:- use_module(library(uri)).
+:- use_module(library(uri/uri_ext)).
 
 
 
@@ -1102,15 +1104,12 @@ ckan_request(Uri, Action, Result) :-
 
 
 ckan_request(Uri1, Action, Args1, Result) :-
-  uri_components(Uri1, uri_components(Scheme,Auth,Path1,_,_)), !,
-  atomic_list_concat([''|Segments1], /, Path1),
-  (append(Segments2, [''], Segments1) -> true ; Segments2 = Segments1),
   (del_dict(version, Args1, Version, Args2) -> true ; Args2 = Args1),
-  include(ground, [api,Version,action,Action], Segments3),
-  append(Segments2, Segments3, Segments4),
-  State = repeat(true),
+  uri_comps(Uri1, uri(Scheme,Auth,Segments1,_,_)),
+  include(ground, [api,Version,action,Action], Segments2),
+  append(Segments1, Segments2, Segments3),
   (   del_dict(page_size, Args2, PageSize, Args3)
-  ->  betwixt(State, 0, inf, PageSize, Offset),
+  ->  between(0, inf, PageSize, Offset),
       Args4 = Args3.put(_{limit: PageSize, offset: Offset})
   ;   Args4 = Args2
   ),
@@ -1119,11 +1118,9 @@ ckan_request(Uri1, Action, Args1, Result) :-
   ;   Args5 = Args4,
       Options = []
   ),
-  atomic_list_concat([''|Segments4], /, Path3),
-  dict_pairs(Args5, _, Args6),
-  uri_query_components(Query, Args6),
-  uri_components(Uri2, uri_components(Scheme,Auth,Path3,Query,_)),
-  catch(
+  dict_pairs(Args5, Args6),
+  uri_comps(Uri2, uri(Scheme,Auth,Segments3,Args6,_)),
+  setup_call_cleanup(
     http_open(
       Uri2,
       In,
@@ -1133,63 +1130,27 @@ ckan_request(Uri1, Action, Args1, Result) :-
         request_header('Accept'='application/json'),
         status_code(Status),
         timeout(60)
-      | Options
+        | Options
       ]
     ),
-    E,
-    true
-  ),
-  (   var(E)
-  ->  true
-  ;   nb_setarg(1, State, false),
-      format(user_output, "~w\n", [E]),
-      debug(http(send_request), "~w\n", [E]),
-      print_message(warning, E),
-      !, false
-  ),
-  call_cleanup(
-    (   between(200, 299, Status)
-    ->  http_parse_header_value(content_type, ContentType, MT),
-        ckan_request_stream(Uri2, In, MT, State, Result)
-    ;   fail
+    (
+      must_be(between(200,299), Status),
+      http_parse_header_value(content_type, ContentType, media(Supertype/Subtype,_)),
+      must_be(oneof([media(application/json)]), media(Supertype/Subtype)),
+      json_read_dict(In, Reply),
+      must_be(dict, Reply),
+      (   get_dict(error, Reply, Error)
+      ->  throw(error(Error.'__type',context(Reply.help,Error.message)))
+      ;   _{result: Results} :< Reply,
+          (   is_of_type(boolean, Results)
+          ->  Result = Results
+          ;   is_of_type(dict, Results)
+          ->  Result = Results
+          ;   is_of_type(list(dict), Results)
+          ->  member(Result, Results)
+          ;   type_error(json, Reply)
+          )
+      )
     ),
     close(In)
   ).
-ckan_request(Uri, _, _, _) :-
-  type_error(uri, Uri).
-
-ckan_request_stream(Uri, In, media(application/json,_), State, Result) :- !,
-  (   catch(json_read_dict(In, Reply), E, true)
-  ->  (   var(E)
-      ->  true
-      ;   print_message(warning, buggy_json(Uri,E)),
-          nb_setarg(1, State, false)
-      )
-  ;   nb_setarg(1, State, false),
-      fail
-  ),
-  (   \+ is_dict(Reply)
-  ->  print_message(no_ckan_reply(Uri,Reply))
-  ;   get_dict(error, Reply, Error)
-  ->  throw(error(Error.'__type',context(Reply.help,Error.message)))
-  ;   get_dict(result, Reply, Result),
-      (   boolean(Result)
-      ->  nb_setarg(1, State, false)
-      ;   Result == []
-      ->  nb_setarg(1, State, false)
-      ;   true
-      )
-  ).
-ckan_request_stream(Uri, _, MediaType, _, _) :-
-  debug(ckan_api, "Non-JSON Media Type ~w (~a).", [MediaType,Uri]),
-  fail.
-
-boolean(false).
-boolean(true).
-
-betwixt(_, Low, _, _, Low).
-betwixt(State, Low0, High, Interval, Value):-
-  arg(1, State, true),
-  Low is Low0 + Interval,
-  (High == inf -> true ; Low =< High),
-  betwixt(State, Low, High, Interval, Value).

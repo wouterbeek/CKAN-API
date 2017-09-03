@@ -206,4 +206,4 @@ ckan2rdf_thread(Dir) :-
   N2 is N1 * 10,
   set_prolog_flag(cpu_count, N2),
   aggregate_all(set(Site), ckan_site_uri(Site), Sites),
-  concurrent_maplist(ckan2rdf(Dir), Sites).
+  thread_create(concurrent_maplist(ckan2rdf(Dir), Sites), _, [detached(true)]).
