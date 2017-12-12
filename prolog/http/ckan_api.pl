@@ -86,7 +86,7 @@ The following debug flag is defined:
 @author Wouter Beek
 @compat Based on CKAN API 2.6.0
 @see http://docs.ckan.org/en/latest/api.html
-@version 2017/04, 2017/06, 2017/09
+@version 2017/04-2017/11
 */
 
 :- use_module(library(apply)).
@@ -94,7 +94,7 @@ The following debug flag is defined:
 :- use_module(library(dict_ext)).
 :- use_module(library(error)).
 :- use_module(library(http/http_header)).
-:- use_module(library(http/http_open)).
+:- use_module(library(http/http_client2)).
 :- use_module(library(http/json)).
 :- use_module(library(lists)).
 :- use_module(library(math_ext)).
@@ -191,21 +191,13 @@ ckan_resource(Uri, Res) :-
 %! ckan_site(-Site) is nondet.
 
 ckan_site(Site) :-
-  setup_call_cleanup(
-    http_open(
-      'https://ckan.github.io/ckan-instances/config/instances.json',
-      In,
-      [
-        cert_verify_hook(cert_accept_any),
-        request_header('Accept'='application/json'),
-        status_code(Status),
-        timeout(60)
-      ]
-    ),
-    (
-      must_be(between(200,299), Status),
-      json_read_dict(In, Sites)
-    ),
+  http_open2(
+    'https://ckan.github.io/ckan-instances/config/instances.json',
+    In,
+    [accept(json)]
+  ),
+  call_cleanup(
+    json_read_dict(In, Sites),
     close(In)
   ),
   member(Site, Sites).
@@ -1107,7 +1099,7 @@ ckan_request(Uri1, Action, Args1, Result) :-
   (del_dict(version, Args1, Version, Args2) -> true ; Args2 = Args1),
   uri_comps(Uri1, uri(Scheme,Auth,Segments1,_,_)),
   include(ground, [api,Version,action,Action], Segments2),
-  append(Segments1, Segments2, Segments3),
+  append_segments(Segments1, Segments2, Segments3),
   State = state(succeed),
   (   del_dict(page_size, Args2, PageSize, Args3)
   ->  between(0, inf, PageSize, Offset),
@@ -1122,21 +1114,28 @@ ckan_request(Uri1, Action, Args1, Result) :-
   ),
   dict_pairs(Args5, Args6),
   uri_comps(Uri2, uri(Scheme,Auth,Segments3,Args6,_)),
-  setup_call_cleanup(
-    http_open(
+  catch(
+    http_open2(
       Uri2,
       In,
-      [
-        cert_verify_hook(cert_accept_any),
-        header(content_type, ContentType),
-        request_header('Accept'='application/json'),
-        status_code(Status),
-        timeout(60)
-        | Options
-      ]
+      [accept(json),failure(404),metadata([Meta|_])|Options]
     ),
+    E,
+    true
+  ),
+  % It is normal for CKAN endpoints to give timeouts and such.  This
+  % is so common that we choose to _always fail silently_ in case of
+  % endpoint-related issues.
+  (   var(E)
+  ->  ckan_response(In, Meta, State, Result)
+  ;   print_message(warning, E),
+      fail
+  ).
+
+ckan_response(In, Meta, State, Result) :-
+  _{'content-type': [ContentType]} :< Meta.headers,
+  call_cleanup(
     (
-      (between(200, 299, Status) -> true ; throw(http_error(Status,Uri2))),
       http_parse_header_value(content_type, ContentType, media(Supertype/Subtype,_)),
       must_be(oneof([media(application/json)]), media(Supertype/Subtype)),
       json_read_dict(In, Reply),
