@@ -1118,7 +1118,7 @@ ckan_request(Uri1, Action, Args1, Result) :-
     http_open2(
       Uri2,
       In,
-      [accept(json),failure(404),metadata([Meta|_])|Options]
+      [accept(json),failure(404),metadata(Metas)|Options]
     ),
     E,
     true
@@ -1127,17 +1127,16 @@ ckan_request(Uri1, Action, Args1, Result) :-
   % is so common that we choose to _always fail silently_ in case of
   % endpoint-related issues.
   (   var(E)
-  ->  ckan_response(In, Meta, State, Result)
+  ->  ckan_response(In, Metas, State, Result)
   ;   print_message(warning, E),
       fail
   ).
 
-ckan_response(In, Meta, State, Result) :-
-  _{'content-type': [ContentType]} :< Meta.headers,
+ckan_response(In, Metas, State, Result) :-
   call_cleanup(
     (
-      http_parse_header_value(content_type, ContentType, media(Supertype/Subtype,_)),
-      must_be(oneof([media(application/json)]), media(Supertype/Subtype)),
+      http_metadata_content_type(Metas, MediaType),
+      assertion(MediaType = media(application/json,_)),
       json_read_dict(In, Reply),
       must_be(dict, Reply),
       (   get_dict(error, Reply, Error)
