@@ -86,20 +86,22 @@ The following debug flag is defined:
 @author Wouter Beek
 @compat Based on CKAN API 2.6.0
 @see http://docs.ckan.org/en/latest/api.html
-@version 2017/04-2017/11
+@version 2017-2018
 */
 
 :- use_module(library(apply)).
 :- use_module(library(debug)).
-:- use_module(library(dict_ext)).
 :- use_module(library(error)).
 :- use_module(library(http/http_header)).
-:- use_module(library(http/http_client2)).
 :- use_module(library(http/json)).
 :- use_module(library(lists)).
-:- use_module(library(math_ext)).
 :- use_module(library(solution_sequences)).
-:- use_module(library(uri/uri_ext)).
+:- use_module(library(yall)).
+
+:- use_module(library(dict)).
+:- use_module(library(http/http_client2)).
+:- use_module(library(math_ext)).
+:- use_module(library(uri_ext)).
 
 
 
@@ -1137,18 +1139,18 @@ ckan_response(In, Metas, State, Result) :-
     (
       http_metadata_content_type(Metas, MediaType),
       assertion(MediaType = media(application/json,_)),
-      json_read_dict(In, Reply),
-      must_be(dict, Reply),
-      (   get_dict(error, Reply, Error)
-      ->  throw(error(Error.'__type',context(Reply.help,Error.message)))
-      ;   _{result: Result} :< Reply,
-          (   is_of_type(boolean, Result)
-          ->  true
-          ;   is_of_type(dict, Result)
-          ->  true
-          ;   is_of_type(list, Result),
-              Result \== []
-          ->  true
+      json_read_dict(In, Reply, [value_string_as(atom)]),
+      (   _{error: Error, help: Help} :< Reply
+      ->  throw(error(Error.'__type',context(Help,Error.message)))
+      ;   http_metadata_final_uri(Metas, Uri),
+          _{result: Result0} :< Reply,
+          (   is_of_type(boolean, Result0)
+          ->  Result = Result0
+          ;   is_of_type(dict, Result0)
+          ->  result_tag(Uri, Result0, Result)
+          ;   is_of_type(list, Result0),
+              Result0 \== []
+          ->  maplist(result_tag(Uri), Result0, Result)
           ;   nb_setarg(1, State, fail),
               fail
           )
@@ -1156,3 +1158,8 @@ ckan_response(In, Metas, State, Result) :-
     ),
     close(In)
   ).
+
+result_tag(Uri, Dict1, Dict2) :-
+  is_dict(Dict1), !,
+  dict_tag(Dict1, Uri, Dict2).
+result_tag(_, Result, Result).
