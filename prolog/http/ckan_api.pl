@@ -1138,7 +1138,10 @@ ckan_response(In, Metas, State, Result) :-
   call_cleanup(
     (
       http_metadata_content_type(Metas, MediaType),
-      assertion(MediaType = media(application/json,_)),
+      (   MediaType = media(application/json,_)
+      ->  true
+      ;   throw(error(media_type(media(application/json,_),MediaType)))
+      ),
       json_read_dict(In, Reply, [value_string_as(atom)]),
       (   _{error: Error, help: Help} :< Reply
       ->  throw(error(Error.'__type',context(Help,Error.message)))
