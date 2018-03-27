@@ -109,8 +109,8 @@ The following debug flag is defined:
 
 % HIGH-LEVEL API %
 
-%! ckan_group(+Uri, -Group:dict) is nondet.
-%! ckan_group(-Uri, -Group:dict) is nondet.
+%! ckan_group(+Uri:atom, -Group:dict) is nondet.
+%! ckan_group(-Uri:atom, -Group:dict) is nondet.
 %
 % Enumerates CKAN groups.
 %
@@ -143,8 +143,8 @@ ckan_group(Uri, Dict) :-
 
 
 
-%! ckan_license(+Uri, -License) is nondet.
-%! ckan_license(-Uri, -License) is nondet.
+%! ckan_license(+Uri:atom, -License:dict) is nondet.
+%! ckan_license(-Uri:atom, -License:dict) is nondet.
 %
 % Enumerates CKAN licenses.
 
@@ -155,8 +155,8 @@ ckan_license(Uri, License) :-
 
 
 
-%! ckan_organization(+Uri, -Org) is nondet.
-%! ckan_organization(-Uri, -Org) is nondet.
+%! ckan_organization(+Uri:atom, -Organization:dict) is nondet.
+%! ckan_organization(-Uri:atom, -Organization:dict) is nondet.
 %
 % Enumerates CKAN organizations.
 
@@ -168,8 +168,8 @@ ckan_organization(Uri, Dict) :-
 
 
 
-%! ckan_package(+Uri, -Pack) is nondet.
-%! ckan_package(-Uri, -Pack) is nondet.
+%! ckan_package(+Uri:atom, -Pack:dict) is nondet.
+%! ckan_package(-Uri:atom, -Pack:dict) is nondet.
 %
 % Enumerates CKAN packages.
 
@@ -181,8 +181,8 @@ ckan_package(Uri, Dict) :-
 
 
 
-%! ckan_resource(+Uri, -Res) is nondet.
-%! ckan_resource(-Uri, -Res) is nondet.
+%! ckan_resource(+Uri:atom, -Resource:dict) is nondet.
+%! ckan_resource(-Uri:atom, -Resource:dict) is nondet.
 
 ckan_resource(Uri, Res) :-
   ckan_package(Uri, Pack),
@@ -190,7 +190,7 @@ ckan_resource(Uri, Res) :-
 
 
 
-%! ckan_site(-Site) is nondet.
+%! ckan_site(-Site:dict) is nondet.
 
 ckan_site(Site) :-
   http_open2(
@@ -206,8 +206,10 @@ ckan_site(Site) :-
 
 
 
-%! ckan_site_uri(-Uri) is det.
+%! ckan_site_uri(-Uri:atom) is det.
 
+ckan_site_uri('https://data.overheid.nl/data/').
+ckan_site_uri('https://opendata.oorlogsbronnen.nl').
 ckan_site_uri(Uri) :-
   distinct(Uri, (
     ckan_site(Site),
@@ -217,8 +219,8 @@ ckan_site_uri(Uri) :-
 
 
 
-%! ckan_tag(+Uri, -Tag) is nondet.
-%! ckan_tag(-Uri, -Tag) is nondet.
+%! ckan_tag(+Uri:atom, -Tag:dict) is nondet.
+%! ckan_tag(-Uri:atom, -Tag:dict) is nondet.
 %
 % Enumerates CKAN tags.
 
@@ -230,8 +232,8 @@ ckan_tag(Uri, Dict) :-
 
 
 
-%! ckan_user(+Uri, -User) is nondet.
-%! ckan_user(-Uri, -User) is nondet.
+%! ckan_user(+Uri:atom, -User:dict) is nondet.
+%! ckan_user(-Uri:atom, -User:dict) is nondet.
 %
 % Enumerates CKAN users.
 
@@ -247,8 +249,8 @@ ckan_user(Uri, Dict) :-
 
 % REST API %
 
-%! ckan_current_package_list_with_resources(+Uri, -Packs) is det.
-%! ckan_current_package_list_with_resources(+Uri, +Args, -Packs) is det.
+%! ckan_current_package_list_with_resources(+Uri:atom, -Packs) is det.
+%! ckan_current_package_list_with_resources(+Uri:atom, +Args, -Packs) is det.
 %
 % Return a list of the site's datasets (packages) and their resources.
 %
@@ -267,8 +269,8 @@ ckan_current_package_list_with_resources(Uri, Args, Packs) :-
 
 
 
-%! ckan_format_autocomplete(+Uri, +Query, -Formats) is det.
-%! ckan_format_autocomplete(+Uri, +Query, +Args, -Formats) is det.
+%! ckan_format_autocomplete(+Uri:atom, +Query, -Formats) is det.
+%! ckan_format_autocomplete(+Uri:atom, +Query, +Args, -Formats) is det.
 %  
 % Return a list of resource formats whose names contain a string.
 %
@@ -290,8 +292,8 @@ ckan_format_autocomplete(Uri, Query, Args1, Formats) :-
 
 
 
-%! ckan_group_list(+Uri, -Groups) is det.
-%! ckan_group_list(+Uri, +Args, -Groups) is det.
+%! ckan_group_list(+Uri:atom, -Groups) is det.
+%! ckan_group_list(+Uri:atom, +Args, -Groups) is det.
 %
 % Return a list of the names of the site's groups.
 % 
@@ -344,8 +346,8 @@ ckan_group_list(Uri, Args, Groups) :-
 
 
 
-%! ckan_group_list_authz(+Uri, -Groups) is det.
-%! ckan_group_list_authz(+Uri, +Args, -Groups) is det.
+%! ckan_group_list_authz(+Uri:atom, -Groups) is det.
+%! ckan_group_list_authz(+Uri:atom, +Args, -Groups) is det.
 %
 % Return the list of groups that the user is authorized to edit.
 %
@@ -374,8 +376,8 @@ ckan_group_list_authz(Uri, Args, Groups) :-
 
 
 
-%! ckan_group_package_show(+Uri, +Group, -Packs) is det.
-%! ckan_group_package_show(+Uri, +Group, +Args, -Packs) is det.
+%! ckan_group_package_show(+Uri:atom, +Group, -Packs) is det.
+%! ckan_group_package_show(+Uri:atom, +Group, +Args, -Packs) is det.
 %
 % Return the datasets (packages) of a group.
 %
@@ -397,8 +399,8 @@ ckan_group_package_show(Uri, Group, Args1, Packs) :-
 
 
 
-%! ckan_group_revision_list(+Uri, +Group, -Revs) is det.
-%! ckan_group_revision_list(+Uri, +Group, +Args1, -Revs) is det.
+%! ckan_group_revision_list(+Uri:atom, +Group, -Revs) is det.
+%! ckan_group_revision_list(+Uri:atom, +Group, +Args1, -Revs) is det.
 %
 % Return a group's revisions.
 %
@@ -415,8 +417,8 @@ ckan_group_revision_list(Uri, Group, Args1, Revs) :-
 
 
 
-%! ckan_group_show(+Uri, +Group, -Dict) is det.
-%! ckan_group_show(+Uri, +Group, +Args, -Dict) is det.
+%! ckan_group_show(+Uri:atom, +Group, -Dict) is det.
+%! ckan_group_show(+Uri:atom, +Group, +Args, -Dict) is det.
 %
 % Return the details of a group.
 %
@@ -460,7 +462,7 @@ ckan_group_show(Uri, Group, Args1, Dict) :-
 
 
 
-%! ckan_license_list(+Uri, -Licenses:list(dict)) is det.
+%! ckan_license_list(+Uri:atom, -Licenses:list(dict)) is det.
 %
 % Return the list of licenses available for datasets on the site.
 
@@ -469,8 +471,8 @@ ckan_license_list(Uri, Licenses) :-
 
 
 
-%! ckan_member_list(+Uri, +Group, -Triples) is det.
-%! ckan_member_list(+Uri, +Group, +Args, -Triples) is det.
+%! ckan_member_list(+Uri:atom, +Group, -Triples) is det.
+%! ckan_member_list(+Uri:atom, +Group, +Args, -Triples) is det.
 %
 % Return the members of a group.
 %
@@ -503,8 +505,8 @@ ckan_member_list(Uri, Group, Args1, Triples) :-
 
 
 
-%! ckan_organization_list(+Uri, -Orgs) is det.
-%! ckan_organization_list(+Uri, +Args, -Orgs) is det.
+%! ckan_organization_list(+Uri:atom, -Orgs) is det.
+%! ckan_organization_list(+Uri:atom, +Args, -Orgs) is det.
 %
 % Return a list of the names of the site's organizations.
 %
@@ -559,8 +561,8 @@ ckan_organization_list(Uri, Args, Orgs) :-
 
 
 
-%! ckan_organization_list_for_user(+Uri, -Orgs) is det.
-%! ckan_organization_list_for_user(+Uri, +Args, -Orgs) is det.
+%! ckan_organization_list_for_user(+Uri:atom, -Orgs) is det.
+%! ckan_organization_list_for_user(+Uri:atom, +Args, -Orgs) is det.
 %
 % Return the organizations that the user has a given permission for.
 %
@@ -605,7 +607,7 @@ ckan_organization_list_for_user(Uri, Args, Orgs) :-
 
 
 
-%! ckan_organization_revision_list(+Uri, +Org, -Revs) is det.
+%! ckan_organization_revision_list(+Uri:atom, +Org, -Revs) is det.
 %
 % Return an organization's revisions.
 %
@@ -618,8 +620,8 @@ ckan_organization_revision_list(Uri, Org, Revs) :-
 
 
 
-%! ckan_organization_show(+Uri, +Org, -Dict) is det.
-%! ckan_organization_show(+Uri, +Org, +Args, -Dict) is det.
+%! ckan_organization_show(+Uri:atom, +Org, -Dict) is det.
+%! ckan_organization_show(+Uri:atom, +Org, +Args, -Dict) is det.
 %
 % Return the details of a organization.
 %
@@ -663,8 +665,8 @@ ckan_organization_show(Uri, Org, Args1, Dict) :-
 
 
 
-%! ckan_package_autocomplete(+Uri, +Query, -Packs) is det.
-%! ckan_package_autocomplete(+Uri, +Query, +Args, -Packs) is det.
+%! ckan_package_autocomplete(+Uri:atom, +Query, -Packs) is det.
+%! ckan_package_autocomplete(+Uri:atom, +Query, +Args, -Packs) is det.
 %
 % Return a list of datasets (packages) that match a string.
 %
@@ -691,8 +693,8 @@ ckan_package_autocomplete(Uri, Query, Args1, Packs) :-
 
 
 
-%! ckan_package_list(+Uri, -Packs) is det.
-%! ckan_package_list(+Uri, +Args, -Packs) is det.
+%! ckan_package_list(+Uri:atom, -Packs) is det.
+%! ckan_package_list(+Uri:atom, +Args, -Packs) is det.
 %
 % Return a list of the names of the site's datasets (packages).
 %
@@ -715,8 +717,8 @@ ckan_package_list(Uri, Args, Packs) :-
 
 
 
-%! ckan_package_relationships_list(+Uri, +Pack1, +Pack2, -Rels) is det.
-%! ckan_package_relationships_list(+Uri, +Pack1, +Pack2, +Args, -Rels) is det.
+%! ckan_package_relationships_list(+Uri:atom, +Pack1, +Pack2, -Rels) is det.
+%! ckan_package_relationships_list(+Uri:atom, +Pack1, +Pack2, +Args, -Rels) is det.
 %
 % Return a dataset (package)'s relationships.
 %
@@ -743,8 +745,8 @@ ckan_package_relationships_list(Uri, Pack1, Pack2, Args1, Rels) :-
 
 
 
-%! ckan_package_revision_list(+Uri, +Pack, -Revs:list(string)) is det.
-%! ckan_package_revision_list(+Uri, +Pack, +Args, -Revs:list(string)) is det.
+%! ckan_package_revision_list(+Uri:atom, +Pack, -Revs:list(string)) is det.
+%! ckan_package_revision_list(+Uri:atom, +Pack, +Args, -Revs:list(string)) is det.
 %
 % Return a dataset (package)'s revisions as a list of dictionaries.
 %
@@ -762,8 +764,8 @@ ckan_package_revision_list(Uri, Pack, Args1, Revs) :-
 
 
 
-%! ckan_package_show(+Uri, +Pack, -Dict) is det.
-%! ckan_package_show(+Uri, +Pack, +Args, -Dict) is det.
+%! ckan_package_show(+Uri:atom, +Pack, -Dict) is det.
+%! ckan_package_show(+Uri:atom, +Pack, +Args, -Dict) is det.
 %
 % Return the metadata of a dataset (package) and its resources.
 %
@@ -791,8 +793,8 @@ ckan_package_show(Uri, Pack, Args1, Dict) :-
 
 
 
-%! ckan_resource_show(+Uri, +Res, -Dict) is det.
-%! ckan_resource_show(+Uri, +Res, +Args, -Dict) is det.
+%! ckan_resource_show(+Uri:atom, +Res, -Dict) is det.
+%! ckan_resource_show(+Uri:atom, +Res, +Args, -Dict) is det.
 %
 % Return the metadata of a resource.
 %
@@ -815,8 +817,8 @@ ckan_resource_show(Uri, Res, Args1, Dict) :-
 
 
 
-%! ckan_resource_status_show(+Uri, +Res, -Statuses:list(atom)) is det.
-%! ckan_resource_status_show(+Uri, +Res, +Args, -Statuses:list(atom)) is det.
+%! ckan_resource_status_show(+Uri:atom, +Res, -Statuses:list(atom)) is det.
+%! ckan_resource_status_show(+Uri:atom, +Res, +Args, -Statuses:list(atom)) is det.
 %
 % Statuses can contain the following atoms: `date_done', `traceback',
 % `task_status'.
@@ -837,8 +839,8 @@ ckan_resource_status_show(Uri, Res, Args1, Statuses) :-
 
 
 
-%! ckan_resource_view_list(+Uri, +Res, -ResViews:list(dict)) is det.
-%! ckan_resource_view_list(+Uri, +Res, +Args, -ResViews:list(dict)) is det.
+%! ckan_resource_view_list(+Uri:atom, +Res, -ResViews:list(dict)) is det.
+%! ckan_resource_view_list(+Uri:atom, +Res, +Args, -ResViews:list(dict)) is det.
 %
 % Return the list of resource views for a particular resource.
 %
@@ -854,8 +856,8 @@ ckan_resource_view_list(Uri, Res, Args1, ResViews) :-
 
 
 
-%! ckan_resource_view_show(+Uri, +ResView, -Dict) is det.
-%! ckan_resource_view_show(+Uri, +ResView, +Args, -Dict) is det.
+%! ckan_resource_view_show(+Uri:atom, +ResView, -Dict) is det.
+%! ckan_resource_view_show(+Uri:atom, +ResView, +Args, -Dict) is det.
 %
 % Return the metadata of a resource_view.
 %
@@ -872,8 +874,8 @@ ckan_resource_view_show(Uri, ResView, Args1, Dict) :-
 
 
 
-%! ckan_revision_list(+Uri, -Revs:list(string)) is det.
-%! ckan_revision_list(+Uri, +Args, -Revs:list(string)) is det.
+%! ckan_revision_list(+Uri:atom, -Revs:list(string)) is det.
+%! ckan_revision_list(+Uri:atom, +Args, -Revs:list(string)) is det.
 %
 % Return a list of the IDs of the site's revisions.  They are sorted
 % with the newest first.
@@ -907,7 +909,7 @@ ckan_revision_list(Uri, Args, Revs) :-
 
 
 
-%! ckan_revision_show(+Uri, +Rev, -Dict) is det.
+%! ckan_revision_show(+Uri:atom, +Rev, -Dict) is det.
 %
 % Return the details of a revision.
 %
@@ -918,15 +920,15 @@ ckan_revision_show(Uri, Rev, Dict) :-
 
 
 
-%! ckan_site_read(+Uri) is semidet.
+%! ckan_site_read(+Uri:atom) is semidet.
 
 ckan_site_read(Uri) :-
   ckan_request(Uri, site_read, true).
 
 
 
-%! ckan_tag_list(+Uri, -Tags) is det.
-%! ckan_tag_list(+Uri, +Data, -Tags) is det.
+%! ckan_tag_list(+Uri:atom, -Tags) is det.
+%! ckan_tag_list(+Uri:atom, +Data, -Tags) is det.
 %
 % Returns a list of the site's tags.
 %
@@ -960,8 +962,8 @@ ckan_tag_list(Uri, Args, Tags) :-
 
 
 
-%! ckan_tag_show(+Uri, +Tag, -Dict) is det.
-%! ckan_tag_show(+Uri, +Tag, +Args, -Dict) is det.
+%! ckan_tag_show(+Uri:atom, +Tag, -Dict) is det.
+%! ckan_tag_show(+Uri:atom, +Tag, +Args, -Dict) is det.
 %
 % Return the details of a tag and all its datasets.
 %
@@ -993,8 +995,8 @@ ckan_tag_show(Uri, Tag, Args1, Dict) :-
 
 
 
-%! ckan_user_list(+Uri, -Users:list(dict)) is det.
-%! ckan_user_list(+Uri, +Args, -Users:list(dict)) is det.
+%! ckan_user_list(+Uri:atom, -Users:list(dict)) is det.
+%! ckan_user_list(+Uri:atom, +Args, -Users:list(dict)) is det.
 %
 % Return a list of the site's user accounts.
 %
@@ -1029,8 +1031,8 @@ ckan_user_list(Uri, Args, Users) :-
 
 
 
-%! ckan_user_show(+Uri, +User, -Dict) is det.
-%! ckan_user_show(+Uri, +User, +Args, -Dict) is det.
+%! ckan_user_show(+Uri:atom, +User, -Dict) is det.
+%! ckan_user_show(+Uri:atom, +User, +Args, -Dict) is det.
 %
 % Return a user account.
 %
@@ -1077,8 +1079,8 @@ ckan_user_show(Uri, User, Args1, Dict) :-
 
 % HELPERS %
 
-%! ckan_request(+Uri, +Action, -Result) is nondet.
-%! ckan_request(+Uri, +Action, +Args, -Result) is nondet.
+%! ckan_request(+Uri:atom, +Action, -Result) is nondet.
+%! ckan_request(+Uri:atom, +Action, +Args, -Result) is nondet.
 %
 % The arguments are supported:
 %
@@ -1116,47 +1118,30 @@ ckan_request(Uri1, Action, Args1, Result) :-
   ),
   dict_pairs(Args5, Args6),
   uri_comps(Uri2, uri(Scheme,Auth,Segments3,Args6,_)),
-  catch(
-    http_open2(
-      Uri2,
-      In,
-      [accept(json),failure(404),metadata(Metas)|Options]
-    ),
-    E,
-    true
-  ),
-  % It is normal for CKAN endpoints to give timeouts and such.  This
-  % is so common that we choose to _always fail silently_ in case of
-  % endpoint-related issues.
-  (   var(E)
-  ->  ckan_response(In, Metas, State, Result)
-  ;   print_message(warning, E),
-      fail
+  http_open2(Uri2, In, [accept(json),failure(404),metadata(Metas)|Options]),
+  call_cleanup(
+    ckan_response(In, Metas, State, Result),
+    close(In)
   ).
 
 ckan_response(In, Metas, State, Result) :-
-  call_cleanup(
-    (
-      http_metadata_content_type(Metas, MediaType),
-      assertion(MediaType = media(application/json,_)),
-      json_read_dict(In, Reply, [value_string_as(atom)]),
-      (   _{error: Error, help: Help} :< Reply
-      ->  throw(error(Error.'__type',context(Help,Error.message)))
-      ;   http_metadata_final_uri(Metas, Uri),
-          _{result: Result0} :< Reply,
-          (   is_of_type(boolean, Result0)
-          ->  Result = Result0
-          ;   is_of_type(dict, Result0)
+  http_metadata_content_type(Metas, MediaType),
+  MediaType = media(application/json,_),
+  json_read_dict(In, Reply, [value_string_as(atom)]),
+  (   _{error: Error, help: Help} :< Reply
+  ->  throw(error(Error.'__type',context(Help,Error.message)))
+  ;   http_metadata_final_uri(Metas, Uri),
+      _{result: Result0} :< Reply,
+      (   is_of_type(boolean, Result0)
+      ->  Result = Result0
+      ;   is_of_type(dict, Result0)
           ->  result_tag(Uri, Result0, Result)
-          ;   is_of_type(list, Result0),
-              Result0 \== []
+      ;   is_of_type(list, Result0),
+          Result0 \== []
           ->  maplist(result_tag(Uri), Result0, Result)
-          ;   nb_setarg(1, State, fail),
-              fail
-          )
+      ;   nb_setarg(1, State, fail),
+          fail
       )
-    ),
-    close(In)
   ).
 
 result_tag(Uri, Dict1, Dict2) :-
