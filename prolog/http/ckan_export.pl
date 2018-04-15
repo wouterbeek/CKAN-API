@@ -18,6 +18,7 @@ Exports a CKAN site to a collection of JSON files.
 
 :- use_module(library(date_time)).
 :- use_module(library(http/ckan_api)).
+:- use_module(library(uri_ext)).
 
 :- meta_predicate
     ckan_export(2, +, +).
@@ -38,11 +39,11 @@ ckan_export(Site) :-
   ckan_export(ckan_tag, Site, tag),
   ckan_export(ckan_user, Site, user).
 
-ckan_export(Mod:Goal_2, Site, Name) :-
-  now(Now),
-  writeln(Now),
+ckan_export(Mod:Goal_2, Site, Category) :-
+  uri_comps(Site, uri(_,auth(_,_,Host,_),_,_,_)),
+  now(dt(Y,M,D,_,_,_,_)),
   flag(Goal_2, _, 0),
-  format(atom(File), '~a.json.gz', [Name]),
+  format(atom(File), '~a-~d-~d-~d-~a.json.gz', [Host,Y,M,D,Category]),
   setup_call_cleanup(
     gzopen(File, write, Out),
     (
