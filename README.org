@@ -1,2 +1,9 @@
-#+TITLE: ckan_api
+#+TITLE: Prolog-based CKAN API
 #+AUTHOR: Wouter Beek
+
+* Export a CKAN site
+
+#+BEGIN_SRC prolog
+?- use_module(library(http/ckan_export)).
+?- ckan_export(URL).
+#+END_SRC
