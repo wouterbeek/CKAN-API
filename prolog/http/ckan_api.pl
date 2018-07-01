@@ -2,16 +2,18 @@
   ckan_api,
   [
   % HIGH-LEVEL API
-    ckan_group/2,        % ?Uri, -Group
-    ckan_license/2,      % ?Uri, -License
-    ckan_organization/2, % ?Uri, -Org
-    ckan_package/2,      % ?Uri, -Pack
-    ckan_resource/2,     % ?Uri, -Res
-    ckan_site/1,         % -Site
-    ckan_site_uri/1,     % -Uri
-    ckan_tag/2,          % ?Uri, -Tag
-    ckan_user/2,         % ?Uri, -User
-  % LOW-LEVEL REST API
+    ckan_group/2,         % ?Uri, -Group
+    ckan_license/2,       % ?Uri, -License
+    ckan_organization/2,  % ?Uri, -Org
+    ckan_package/2,       % ?Uri, -Pack
+    ckan_resource/2,      % ?Uri, -Res
+    ckan_site/1,          % -Site
+    ckan_site_uri/1,      % -Uri
+    ckan_tag/2,           % ?Uri, -Tag
+    ckan_uri_name/2,      % +Uri, -Name
+    ckan_user/2,          % ?Uri, -User
+  % LOW-LEVEL REST APIEnsures that this directory is present in Git checkouts.
+
     ckan_current_package_list_with_resources/2, % +Uri, -Packs
     ckan_current_package_list_with_resources/3, % +Uri, +Args, -Packs
     ckan_format_autocomplete/3,                 % +Uri, +Query, -Formats
@@ -98,6 +100,7 @@ The following debug flag is defined:
 :- use_module(library(solution_sequences)).
 :- use_module(library(yall)).
 
+:- use_module(library(date_time)).
 :- use_module(library(dict)).
 :- use_module(library(http/http_client2)).
 :- use_module(library(math_ext)).
@@ -232,6 +235,15 @@ ckan_tag(Uri, Dict) :-
 
 
 
+%! ckan_uri_name(+Uri:atom, -Name:atom) is det.
+
+ckan_uri_name(Uri, Name) :-
+  uri_comps(Uri, uri(_,auth(_,_,Host,_),_,_,_)),
+  now(dt(Y,M,D,_,_,_,_)),
+  format(atom(Name), '~a-~d-~d-~d', [Host,Y,M,D]).
+
+
+
 %! ckan_user(+Uri:atom, -User:dict) is nondet.
 %! ckan_user(-Uri:atom, -User:dict) is nondet.
 %
@@ -271,7 +283,7 @@ ckan_current_package_list_with_resources(Uri, Args, Packs) :-
 
 %! ckan_format_autocomplete(+Uri:atom, +Query, -Formats) is det.
 %! ckan_format_autocomplete(+Uri:atom, +Query, +Args, -Formats) is det.
-%  
+%
 % Return a list of resource formats whose names contain a string.
 %
 % @arg Query The string to search for.
@@ -296,7 +308,7 @@ ckan_format_autocomplete(Uri, Query, Args1, Formats) :-
 %! ckan_group_list(+Uri:atom, +Args, -Groups) is det.
 %
 % Return a list of the names of the site's groups.
-% 
+%
 % The following arguments are supported:
 %
 %   * all_fields(+boolean)
@@ -826,7 +838,7 @@ ckan_resource_show(Uri, Res, Args1, Dict) :-
 % Return the statuses of a resource's tasks.
 %
 % @arg Res The id of the resource.
-% 
+%
 % @deprecated
 
 ckan_resource_status_show(Uri, Res, Statuses) :-
