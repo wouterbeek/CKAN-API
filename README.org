@@ -1,9 +1,22 @@
 #+TITLE: Prolog-based CKAN API
 #+AUTHOR: Wouter Beek
 
-* Export a CKAN site
+* Installation
+
+  1. Install [[https://github.com/wouterbeek/Prolog-Library-Collection][Prolog Library Collection]], and follow its installation
+     instructions.
+  2. Clone this repository: ~git clone
+     https://github.com/wouterbeek/CKAN-API~
+  3. Add the following line to your ~.swiplrc~ file:
+
+#+BEGIN_SRC
+user:file_search_path(library, '/your/path/to/CKAN-API/prolog').
+#+END_SRC
+
+* Use
+** Export a CKAN site
 
 #+BEGIN_SRC prolog
-?- use_module(library(http/ckan_export)).
+?- [library(http/ckan_export)].
 ?- ckan_export(URL).
 #+END_SRC
